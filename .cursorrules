@@ -1,0 +1,44 @@
+# Commit Message Rules
+
+## Format
+
+Keep commit messages clear and concise.
+
+### Structure
+```
+[Type] Title
+
+- What did
+- Why it matters (optional)
+```
+
+### Types
+- `[feat]` - New feature
+- `[fix]` - Bug fix
+- `[docs]` - Documentation
+- `[style]` - Code style (formatting, etc.)
+- `[refactor]` - Code refactoring
+- `[test]` - Tests
+- `[chore]` - Maintenance tasks
+
+### Rules
+- Keep titles under 50 characters
+- Use imperative mood ("Add feature" not "Added feature")
+- Start with capital letter
+- No period at the end of title
+- Use bullet points for detailed explanations
+- Reference issues when applicable (e.g., "Fixes #123")
+
+### Examples
+```
+[feat] Add message scheduling
+
+- Implement task queue for delayed messages
+- Add cron job support
+```
+
+```
+[fix] Handle keyboard input errors
+
+- Validate user input before processing
+```

@@ -4,7 +4,7 @@ import asyncio
 import json
 import dotenv
 from aiogram.dispatcher.dispatcher import MemoryStorage
-from aiogram.types import CallbackQuery, Message, ReplyKeyboardRemove
+from aiogram.types import CallbackQuery, Message
 from aiogram.filters import CommandStart
 from aiogram.fsm.context import FSMContext
 from aiogram import F, Bot, Dispatcher
@@ -14,8 +14,6 @@ from misc.keyboards import create_post_keyboard, main_menu_keyboard, date_picker
 dotenv.load_dotenv()
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 
-# TODO: Replace with your actual GitHub Pages URL after hosting
-# Note: For localhost testing, use ngrok/localtunnel to get an HTTPS URL
 WEBAPP_URL = "https://DesmondFox.github.io/telegram-scheduler/webapp/picker.html"
 
 bot = Bot(token=TELEGRAM_BOT_TOKEN)
@@ -63,6 +61,12 @@ async def cancel_create_post_text(message: Message, state: FSMContext):
     await message.answer("Creation cancelled.", reply_markup=main_menu_keyboard())
 
 
+@dp.message(SchedulerBotStates.CREATE_POST_DATE, F.text == "Schedule now")
+async def schedule_now_text(message: Message, state: FSMContext):
+    await state.set_state(SchedulerBotStates.CREATE_POST_PREVIEW)
+    await message.answer("Post will be sent right after push button is pressed.")
+
+
 @dp.message(SchedulerBotStates.CREATE_POST_DATE, F.web_app_data)
 async def process_date_webapp(message: Message, state: FSMContext):
     try:
@@ -71,16 +75,9 @@ async def process_date_webapp(message: Message, state: FSMContext):
         user_timezone = data.get('timezone')
         
         await state.update_data(scheduled_time=datetime_str, user_timezone=user_timezone)
-        
-        # Provide feedback and remove the Reply Keyboard
-        await message.answer(
-            f"📅 Date received: {datetime_str}\nTimezone: {user_timezone}",
-            reply_markup=ReplyKeyboardRemove()
-        )
-        
-        # Moving to PREVIEW as an example
+
         await state.set_state(SchedulerBotStates.CREATE_POST_PREVIEW)
-        await message.answer("Post is ready to be scheduled. (Next steps to be implemented)")
+        await message.answer(f"📅 Picked date and time:\nDate: {datetime_str}\nTimezone: {user_timezone}")
         
     except Exception as e:
         logging.error("Error processing webapp data: %s", e)

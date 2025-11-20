@@ -21,6 +21,7 @@ def date_picker_keyboard(url: str):
     
     buttons = [
         [KeyboardButton(text="📅 Pick Date & Time", web_app=WebAppInfo(url=url))],
+        [KeyboardButton(text="Schedule now")],
         [KeyboardButton(text="Cancel")]
     ]
     keyboard = ReplyKeyboardMarkup(keyboard=buttons, resize_keyboard=True, one_time_keyboard=True)

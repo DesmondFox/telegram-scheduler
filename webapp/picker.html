@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Select Date and Time</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--tg-theme-bg-color, #ffffff);
+            color: var(--tg-theme-text-color, #000000);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        
+        h3 {
+            margin-top: 0;
+            margin-bottom: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 300px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        label {
+            font-size: 14px;
+            color: var(--tg-theme-hint-color, #999999);
+            margin-bottom: 5px;
+            display: block;
+        }
+
+        input[type="datetime-local"] {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            border-radius: 10px;
+            border: 1px solid var(--tg-theme-hint-color, #ccc);
+            background-color: var(--tg-theme-secondary-bg-color, #f0f0f0);
+            color: var(--tg-theme-text-color, #000000);
+            box-sizing: border-box;
+            outline: none;
+        }
+
+        input[type="datetime-local"]:focus {
+            border-color: var(--tg-theme-button-color, #3390ec);
+        }
+
+        #submit-btn {
+            width: 100%;
+            padding: 14px;
+            font-size: 16px;
+            font-weight: bold;
+            background-color: var(--tg-theme-button-color, #3390ec);
+            color: var(--tg-theme-button-text-color, #ffffff);
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        #submit-btn:active {
+            opacity: 0.8;
+        }
+        
+        .hint {
+            font-size: 12px;
+            color: var(--tg-theme-hint-color, #999999);
+            text-align: center;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h3>Schedule Post</h3>
+        
+        <div>
+            <label for="datetime-picker">Date & Time</label>
+            <input type="datetime-local" id="datetime-picker">
+        </div>
+
+        <button id="submit-btn">Confirm Schedule</button>
+        <div class="hint" id="hint-text">Timezone: Local</div>
+    </div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+
+        const picker = document.getElementById('datetime-picker');
+        const btn = document.getElementById('submit-btn');
+        const hintText = document.getElementById('hint-text');
+
+        // Set user's timezone hint
+        const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        hintText.innerText = `Timezone: ${timeZone}`;
+
+        // Default to now or URL param
+        const urlParams = new URLSearchParams(window.location.search);
+        const paramDate = urlParams.get('date'); // Expect ISO-like string YYYY-MM-DDTHH:mm
+
+        const now = new Date();
+        // Adjust to local time string for input value which expects "YYYY-MM-DDTHH:mm" in local time
+        // but we want to be careful. input type=datetime-local works with local time of the device.
+        
+        const toLocalISOString = (date) => {
+            const pad = (n) => n < 10 ? '0' + n : n;
+            const year = date.getFullYear();
+            const month = pad(date.getMonth() + 1);
+            const day = pad(date.getDate());
+            const hours = pad(date.getHours());
+            const minutes = pad(date.getMinutes());
+            return `${year}-${month}-${day}T${hours}:${minutes}`;
+        };
+
+        if (paramDate) {
+            // If paramDate is provided, assume it's compatible or try to parse it
+            // Ideally param should be in compatible format or ISO
+            picker.value = paramDate; 
+        } else {
+            picker.value = toLocalISOString(now);
+        }
+
+        btn.addEventListener('click', () => {
+            const selectedDate = picker.value;
+            if (selectedDate) {
+                // Send back the data. 
+                // We send the raw value from input (YYYY-MM-DDTHH:mm).
+                // It is up to the bot to interpret this as the user's local time.
+                const data = JSON.stringify({ 
+                    datetime: selectedDate,
+                    timezone: timeZone
+                });
+                tg.sendData(data);
+            } else {
+                tg.showAlert("Please select a date and time");
+            }
+        });
+    </script>
+</body>
+</html>
+

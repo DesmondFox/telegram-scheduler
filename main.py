@@ -1,17 +1,21 @@
-import asyncio
-import dotenv
-import os
 import logging
+import os
+import asyncio
+import json
+import dotenv
 from aiogram.dispatcher.dispatcher import MemoryStorage
-from aiogram.types import CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup, Message
+from aiogram.types import CallbackQuery, Message
 from aiogram.filters import CommandStart
+from aiogram.fsm.context import FSMContext
 from aiogram import F, Bot, Dispatcher
 from entities.states import SchedulerBotStates
-from aiogram.fsm.context import FSMContext
-from misc.keyboards import create_post_without_files_keyboard, main_menu_keyboard
+from misc.keyboards import create_post_keyboard, main_menu_keyboard, date_picker_keyboard
 
 dotenv.load_dotenv()
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+
+# TODO: Replace with your actual GitHub Pages URL after hosting
+WEBAPP_URL = "https://USERNAME.github.io/REPO/webapp/picker.html"
 
 bot = Bot(token=TELEGRAM_BOT_TOKEN)
 logging.basicConfig(level=logging.INFO)
@@ -25,25 +29,52 @@ async def start_command(message: Message):
     await message.answer("Hello! I'm a scheduler bot. I can help you schedule your posts.", reply_markup=keyboard)
 
 
+##
+# Create post flow
+##
+
 @dp.callback_query(F.data == "create_post")
 async def create_post_callback(callback: CallbackQuery, state: FSMContext):
-    await state.set_state(SchedulerBotStates.CREATE_POST_WAITING_FOR_FILES)
-    keyboard = create_post_without_files_keyboard()
-    await callback.message.answer("Please send the files for the post.", reply_markup=keyboard)
+    await state.set_state(SchedulerBotStates.CREATE_POST_WAITING_FOR_POST)
+    keyboard = create_post_keyboard()
+    await callback.message.answer("Please send the post to schedule.", reply_markup=keyboard)
 
 
-@dp.callback_query(F.data == "post_without_files")
-async def post_without_files_callback(callback: CallbackQuery, state: FSMContext):
-    await state.set_state(SchedulerBotStates.CREATE_POST_DESCRIPTION)
-    await callback.message.answer("Please enter the description of the post.")
-
-
-@dp.message(SchedulerBotStates.CREATE_POST_DESCRIPTION)
-async def create_post_description_message(message: Message, state: FSMContext):
-    await state.update_data(post_description=message.text)
+@dp.message(SchedulerBotStates.CREATE_POST_WAITING_FOR_POST)
+async def create_post_waiting_for_post_message(message: Message, state: FSMContext):
+    # Save the post content
+    # if message.photo:
+    #     await state.update_data(file_id=message.photo[-1].file_id, content_type="photo", caption=message.caption)
+    # elif message.text:
+    #     await state.update_data(text=message.text, content_type="text")
+    
     await state.set_state(SchedulerBotStates.CREATE_POST_DATE)
-    await message.answer("Please enter the date of the post.")
+    
+    # Send the Date Picker WebApp Button
+    # We can pass parameters to the URL if needed, e.g. ?date=...
+    keyboard = date_picker_keyboard(WEBAPP_URL)
+    await message.answer("Please select the date and time for publication:", reply_markup=keyboard)
 
+
+@dp.message(SchedulerBotStates.CREATE_POST_DATE, F.web_app_data)
+async def process_date_webapp(message: Message, state: FSMContext):
+    try:
+        data = json.loads(message.web_app_data.data)
+        datetime_str = data.get('datetime')
+        user_timezone = data.get('timezone')
+        
+        await state.update_data(scheduled_time=datetime_str, user_timezone=user_timezone)
+        
+        # Provide feedback and move to next state (e.g., PREVIEW or DESTINATIONS)
+        await message.answer(f"📅 Date received: {datetime_str}\nTimezone: {user_timezone}")
+        
+        # Moving to PREVIEW as an example
+        await state.set_state(SchedulerBotStates.CREATE_POST_PREVIEW)
+        await message.answer("Post is ready to be scheduled. (Next steps to be implemented)")
+        
+    except Exception as e:
+        logging.error(f"Error processing webapp data: {e}")
+        await message.answer("Error processing date. Please try again.")
 
 
 if __name__ == "__main__":

@@ -4,7 +4,7 @@ import asyncio
 import json
 import dotenv
 from aiogram.dispatcher.dispatcher import MemoryStorage
-from aiogram.types import CallbackQuery, Message
+from aiogram.types import CallbackQuery, Message, ReplyKeyboardRemove
 from aiogram.filters import CommandStart
 from aiogram.fsm.context import FSMContext
 from aiogram import F, Bot, Dispatcher
@@ -14,6 +14,8 @@ from misc.keyboards import create_post_keyboard, main_menu_keyboard, date_picker
 dotenv.load_dotenv()
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 
+# TODO: Replace with your actual GitHub Pages URL after hosting
+# Note: For localhost testing, use ngrok/localtunnel to get an HTTPS URL
 WEBAPP_URL = "https://DesmondFox.github.io/telegram-scheduler/webapp/picker.html"
 
 bot = Bot(token=TELEGRAM_BOT_TOKEN)
@@ -49,10 +51,16 @@ async def create_post_waiting_for_post_message(message: Message, state: FSMConte
     
     await state.set_state(SchedulerBotStates.CREATE_POST_DATE)
     
-    # Send the Date Picker WebApp Button
-    # We can pass parameters to the URL if needed, e.g. ?date=...
+    # Send the Date Picker WebApp Button (Reply Keyboard)
     keyboard = date_picker_keyboard(WEBAPP_URL)
     await message.answer("Please select the date and time for publication:", reply_markup=keyboard)
+
+
+# Handle "Cancel" text from the Reply Keyboard
+@dp.message(SchedulerBotStates.CREATE_POST_DATE, F.text == "Cancel")
+async def cancel_create_post_text(message: Message, state: FSMContext):
+    await state.clear()
+    await message.answer("Creation cancelled.", reply_markup=main_menu_keyboard())
 
 
 @dp.message(SchedulerBotStates.CREATE_POST_DATE, F.web_app_data)
@@ -64,15 +72,18 @@ async def process_date_webapp(message: Message, state: FSMContext):
         
         await state.update_data(scheduled_time=datetime_str, user_timezone=user_timezone)
         
-        # Provide feedback and move to next state (e.g., PREVIEW or DESTINATIONS)
-        await message.answer(f"📅 Date received: {datetime_str}\nTimezone: {user_timezone}")
+        # Provide feedback and remove the Reply Keyboard
+        await message.answer(
+            f"📅 Date received: {datetime_str}\nTimezone: {user_timezone}",
+            reply_markup=ReplyKeyboardRemove()
+        )
         
         # Moving to PREVIEW as an example
         await state.set_state(SchedulerBotStates.CREATE_POST_PREVIEW)
         await message.answer("Post is ready to be scheduled. (Next steps to be implemented)")
         
     except Exception as e:
-        logging.error(f"Error processing webapp data: {e}")
+        logging.error("Error processing webapp data: %s", e)
         await message.answer("Error processing date. Please try again.")
 
 

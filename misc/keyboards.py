@@ -16,17 +16,12 @@ def create_post_keyboard():
     return keyboard
 
 def date_picker_keyboard(url: str):
-    # WebApp buttons must be in ReplyKeyboardMarkup (keyboard attached to input field) 
-    # OR InlineKeyboardMarkup.
-    # Inline is generally preferred for "actions", but Reply is often used for WebApps 
-    # replacing the keyboard. 
-    # However, for a "Pick Date" action in a flow, Inline is better if supported?
-    # Actually, InlineKeyboard supports WebApp since recently.
-    # Let's use Inline for seamless experience.
+    # WebApp opened via Inline Button CANNOT send data back via sendData method.
+    # We must use ReplyKeyboardMarkup (keyboard below input field) for sendData to work.
     
     buttons = [
-        [InlineKeyboardButton(text="📅 Pick Date & Time", web_app=WebAppInfo(url=url))],
-        [InlineKeyboardButton(text="Cancel", callback_data="cancel_create_post")]
+        [KeyboardButton(text="📅 Pick Date & Time", web_app=WebAppInfo(url=url))],
+        [KeyboardButton(text="Cancel")]
     ]
-    keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
+    keyboard = ReplyKeyboardMarkup(keyboard=buttons, resize_keyboard=True, one_time_keyboard=True)
     return keyboard

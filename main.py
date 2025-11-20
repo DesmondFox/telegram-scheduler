@@ -14,8 +14,7 @@ from misc.keyboards import create_post_keyboard, main_menu_keyboard, date_picker
 dotenv.load_dotenv()
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 
-# TODO: Replace with your actual GitHub Pages URL after hosting
-WEBAPP_URL = "https://USERNAME.github.io/REPO/webapp/picker.html"
+WEBAPP_URL = "https://DesmondFox.github.io/telegram-scheduler/webapp/picker.html"
 
 bot = Bot(token=TELEGRAM_BOT_TOKEN)
 logging.basicConfig(level=logging.INFO)

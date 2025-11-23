@@ -4,11 +4,11 @@ import asyncio
 import json
 from aiogram_dialog import Dialog, DialogManager, StartMode, Window, setup_dialogs
 from aiogram_dialog.widgets.input import MessageInput
-from aiogram_dialog.widgets.kbd import Button
+from aiogram_dialog.widgets.kbd import Button, WebApp
 from aiogram_dialog.widgets.text import Const
 import dotenv
 from aiogram.dispatcher.dispatcher import MemoryStorage
-from aiogram.types import CallbackQuery, Message
+from aiogram.types import CallbackQuery, KeyboardButton, Message, ReplyKeyboardMarkup, WebAppInfo
 from aiogram.filters import CommandStart
 from aiogram.fsm.context import FSMContext
 from aiogram import F, Bot, Dispatcher, Router
@@ -36,7 +36,11 @@ async def to_create_post_window(
     await dialog_manager.switch_to(SchedulerBotStates.CREATE_POST_WAITING_FOR_POST)
 
 
-async def go_back(callback: CallbackQuery, button: Button, dialog_manager: DialogManager, **kwargs) -> None:
+async def go_back(
+    _: CallbackQuery,
+    __: Button,
+    dialog_manager: DialogManager,
+) -> None:
     await dialog_manager.back()
 
 
@@ -46,8 +50,16 @@ async def post_input_handler(
     dialog_manager: DialogManager
 ) -> None:
     # Save the post content
+    await dialog_manager.switch_to(SchedulerBotStates.CREATE_POST_DATETIME)
     pass
 
+
+async def date_time_input_handler(
+    message: Message,
+    message_input: MessageInput,
+    dialog_manager: DialogManager
+) -> None:
+    pass
 
 dialog = Dialog(
     # Main menu window
@@ -67,6 +79,17 @@ dialog = Dialog(
         MessageInput(post_input_handler),
         Button(Const("Back"), "back", on_click=go_back),
         state=SchedulerBotStates.CREATE_POST_WAITING_FOR_POST,
+    ),
+
+    # Select date and time
+    Window(
+        Const("Please select the date and time for publication."),
+        MessageInput(date_time_input_handler),
+        state=SchedulerBotStates.CREATE_POST_DATETIME,
+        markup_factory=ReplyKeyboardMarkup(keyboard=[
+            [KeyboardButton(text="📅 Pick Date & Time", web_app=WebAppInfo(url=WEBAPP_URL))],
+            [KeyboardButton(text="Back")],
+        ], resize_keyboard=True, one_time_keyboard=True),
     ),
 )
 

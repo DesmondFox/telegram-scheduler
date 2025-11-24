@@ -1,5 +1,10 @@
 from aiogram.fsm.state import State, StatesGroup
 
+class DashboardBotStates(StatesGroup):
+    MAIN_MENU = State()
+    SETTINGS = State()
+
+
 class SchedulerBotStates(StatesGroup):
     MAIN_MENU = State()
     CREATE_POST_WAITING_FOR_POST = State()

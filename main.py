@@ -15,6 +15,7 @@ from infrastructure.db_session_middleware import DbSessionMiddleware
 from infrastructure.repo_holder import RepoHolder
 from infrastructure.utils.db import create_db_tables
 from misc.constants import DATA_DIR
+from ui.dialogs.main_menu import main_dialog
 from ui.getters import get_user_data
 
 dotenv.load_dotenv()
@@ -29,34 +30,6 @@ session = async_sessionmaker(bind=engine, expire_on_commit=False, class_=AsyncSe
 bot = Bot(token=TELEGRAM_BOT_TOKEN)
 storage = MemoryStorage()
 dp = Dispatcher(bot=bot, storage=storage)
-
-async def go_back(
-    _: CallbackQuery,
-    __: Button,
-    dialog_manager: DialogManager,
-) -> None:
-    await dialog_manager.back(show_mode=ShowMode.EDIT)
-
-async def go_settings(
-    _: CallbackQuery,
-    __: Button,
-    dialog_manager: DialogManager,
-) -> None:
-    await dialog_manager.switch_to(DashboardBotStates.SETTINGS, show_mode=ShowMode.EDIT)
-
-main_dialog = Dialog(
-    Window(
-        Format("Hello, {first_name}!\nWelcome to the dashboard."),
-        Button(Const("Go settings"), "go_settings", on_click=go_settings),
-        state=DashboardBotStates.MAIN_MENU,
-        getter=get_user_data,
-    ),
-    Window(
-        Const("Settings"),
-        Button(Const("Go back"), "go_back", on_click=go_back),
-        state=DashboardBotStates.SETTINGS,
-    ),
-)
 
 dp.include_router(main_dialog)
 setup_dialogs(dp)

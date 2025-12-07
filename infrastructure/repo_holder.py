@@ -1,5 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from infrastructure.repositories.channel_repo import ChannelRepository
 from infrastructure.repositories.user_repo import UserRepository
 
 class RepoHolder:
@@ -8,3 +9,4 @@ class RepoHolder:
 
         # Repositories
         self.user_repo = UserRepository(session)
+        self.channel_repo = ChannelRepository(session)

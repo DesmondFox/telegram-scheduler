@@ -61,7 +61,10 @@ async def my_chat_member(
 ) -> None:
     # This event is triggered when the bot is added to a chat as an administrator
     # We need to check if the bot has the permission to post messages
-    if event.new_chat_member.status != "administrator":
+    if event.new_chat_member.status != "administrator" or event.chat.type != "channel":
+        logging.info(
+            f"Bot is not an administrator or the chat is not a channel, leaving the channel {event.chat.id}")
+        await event.chat.leave()
         return
 
     user_who_added_bot = event.from_user.id

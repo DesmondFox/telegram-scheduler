@@ -10,3 +10,9 @@ async def go_back(
 ) -> None:
     await dialog_manager.back(show_mode=ShowMode.EDIT)
 
+async def done(
+    _: CallbackQuery,
+    __: Button,
+    dialog_manager: DialogManager,
+) -> None:
+    await dialog_manager.done()

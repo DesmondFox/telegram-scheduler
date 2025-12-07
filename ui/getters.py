@@ -15,3 +15,13 @@ async def get_user_data(
         "username": user.username,
         "language_code": user.language_code,
     }
+
+async def get_bot_info(
+    dialog_manager: DialogManager,
+    repo_holder: RepoHolder,
+    **kwargs,
+) -> dict:
+    bot = await dialog_manager.event.bot.get_me()
+    return {
+        "bot_username": bot.username,
+    }

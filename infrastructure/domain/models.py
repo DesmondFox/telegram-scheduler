@@ -27,7 +27,6 @@ class ChannelModel(BaseEntity):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"))
     platform: Mapped[PlatformEnum] = mapped_column(Enum(PlatformEnum))
-    channel_id: Mapped[str] = mapped_column(String(255))
     target_id: Mapped[str] = mapped_column(String(1024)) # channel id, webhook url, etc.
     title: Mapped[str | None] = mapped_column(String(255))
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)

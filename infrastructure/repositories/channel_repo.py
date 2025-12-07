@@ -23,7 +23,8 @@ class ChannelRepository:
             .where(ChannelModel.user_id == user_id)
             .options(joinedload(ChannelModel.user))
         )
-        return await self.session.scalars(stmt)
+        result = await self.session.scalars(stmt)
+        return result.all()
 
     async def create_channel(self, channel: ChannelModel) -> ChannelModel:
         self.session.add(channel)

@@ -1,6 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
-from sqlalchemy.sql import delete, select
+from sqlalchemy.sql import delete, select, update
 
 from infrastructure.domain.models import ChannelModel
 
@@ -40,6 +40,15 @@ class ChannelRepository:
         stmt = (
             delete(ChannelModel)
             .where(ChannelModel.id == id)
+        )
+        await self.session.execute(stmt)
+        await self.session.commit()
+
+    async def set_channel_active(self, id: int, is_active: bool) -> None:
+        stmt = (
+            update(ChannelModel)
+            .where(ChannelModel.id == id)
+            .values(is_active=is_active)
         )
         await self.session.execute(stmt)
         await self.session.commit()

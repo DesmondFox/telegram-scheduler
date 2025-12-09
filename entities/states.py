@@ -20,3 +20,4 @@ class ChannelsSettingsStates(StatesGroup):
     ADD_CHANNEL = State()       # Select platform [telegram, discord]
     ADD_TELEGRAM_CHANNEL = State()
     ADD_DISCORD_CHANNEL = State()
+    CHANNEL_INFO = State()

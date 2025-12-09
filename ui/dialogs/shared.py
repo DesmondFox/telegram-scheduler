@@ -3,6 +3,14 @@ from aiogram_dialog import DialogManager, ShowMode
 from aiogram_dialog.widgets.kbd import Button
 
 
+
+PLATFORM_EMOJI = {
+    "telegram": "📱",
+    "discord": "🎮",
+    "fallback": "📢",
+}
+
+
 async def go_back(
     _: CallbackQuery,
     __: Button,

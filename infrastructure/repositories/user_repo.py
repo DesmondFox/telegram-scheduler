@@ -25,13 +25,14 @@ class UserRepository:
             await self.session.rollback()
             raise e
     
-    async def get_or_create_user(self, user: User) -> UserModel:
+    async def get_or_create_user(self, user: User, chat_id: int | None = None) -> UserModel:
         user_model = UserModel(
             telegram_id=user.id,
             username=user.username,
             first_name=user.first_name,
             last_name=user.last_name,
             language_code=user.language_code,
+            chat_id=chat_id,
         )
         existing_user = await self.get_user_by_telegram_id(user_model.telegram_id)
         if existing_user:

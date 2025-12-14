@@ -16,6 +16,7 @@ class UserModel(BaseEntity):
     last_name: Mapped[str | None] = mapped_column(String(255))
     language_code: Mapped[str | None] = mapped_column(String(10))
     channels: Mapped[list["ChannelModel"]] = relationship("ChannelModel", back_populates="user")
+    chat_id: Mapped[int | None] = mapped_column(BigInteger, unique=True)
 
 class PlatformEnum(str, enum.Enum):
     TELEGRAM = "telegram"

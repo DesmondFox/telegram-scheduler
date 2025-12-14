@@ -6,6 +6,7 @@ from aiogram_dialog.widgets.kbd import Button, Row, ScrollingGroup, Select
 from aiogram_dialog.widgets.text import Const, Format, Jinja, Multi
 from dotenv.main import logger
 from entities.states import ChannelsSettingsStates, DashboardBotStates
+from infrastructure.domain.models import PlatformEnum
 from infrastructure.repo_holder import RepoHolder
 from ui.dialogs.shared import PLATFORM_EMOJI, done, go_back
 from ui.getters import get_bot_info
@@ -97,6 +98,13 @@ async def go_to_add_discord_channel(
     await dialog_manager.switch_to(ChannelsSettingsStates.ADD_DISCORD_CHANNEL, show_mode=ShowMode.EDIT)
 
 
+async def to_main_menu(
+    _: CallbackQuery,
+    __: Button,
+    dialog_manager: DialogManager,
+) -> None:
+    await dialog_manager.start(DashboardBotStates.MAIN_MENU, show_mode=ShowMode.EDIT)
+
 async def on_channel_selected(
     callback: CallbackQuery,
     widget: Select,
@@ -108,12 +116,23 @@ async def on_channel_selected(
 
 
 async def delete_channel(
-    _: CallbackQuery,
+    callback: CallbackQuery,
     __: Button,
     dialog_manager: DialogManager,
 ) -> None:
+    channel_id = dialog_manager.dialog_data["selected_channel_id"]
+    logging.info(f"Deleting channel {channel_id} from user channels list")
     repo_holder: RepoHolder = dialog_manager.middleware_data["repo_holder"]
-    await repo_holder.channel_repo.remove_channel_by_id(dialog_manager.dialog_data["selected_channel_id"])
+    channel = await repo_holder.channel_repo.get_channel_by_id(channel_id)
+    await repo_holder.channel_repo.remove_channel_by_id(channel_id)
+    # leave chat if added before
+    if channel and channel.platform == PlatformEnum.TELEGRAM:
+        try:
+            await callback.bot.leave_chat(channel.target_id)
+            logging.info(f"Left chat {callback.message.chat.id} because channel {channel_id} was added before")
+        except Exception as e:
+            logging.error(f"Error leaving chat {callback.message.chat.id}: {e}")
+
     await dialog_manager.switch_to(ChannelsSettingsStates.CHANNELS_LIST, show_mode=ShowMode.EDIT)
 
 async def activate_deactivate_channel(
@@ -159,6 +178,7 @@ channels_settings_dialog = Dialog(
                    "add_channel",
                    on_click=go_to_add_channel),
         ),
+        Button(Const("👆 To main menu"), "to_main_menu", on_click=to_main_menu),
         state=ChannelsSettingsStates.CHANNELS_LIST,
         getter=get_channels_data,
     ),

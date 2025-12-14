@@ -31,7 +31,7 @@ session = async_sessionmaker(
 # Bot setup
 bot = Bot(token=TELEGRAM_BOT_TOKEN)
 storage = MemoryStorage()
-dp = Dispatcher(bot=bot, storage=storage)
+dp = Dispatcher(storage=storage)
 
 dp.include_router(main_dialog)
 dp.include_router(channels_settings_dialog)
@@ -44,7 +44,7 @@ async def start_command(
     dialog_manager: DialogManager,
     repo_holder: RepoHolder,
 ) -> None:
-    user = await repo_holder.user_repo.get_or_create_user(message.from_user)
+    user = await repo_holder.user_repo.get_or_create_user(message.from_user, message.chat.id)
 
     await dialog_manager.start(
         DashboardBotStates.MAIN_MENU,
@@ -59,6 +59,12 @@ async def my_chat_member(
     dialog_manager: DialogManager,
     repo_holder: RepoHolder,
 ) -> None:
+    # if kicked
+    if event.new_chat_member.status == "kicked":
+        logging.info(f"Bot is kicked from the channel {event.chat.id}")
+        await repo_holder.channel_repo.set_channel_active(event.chat.id, False)
+        return
+
     # Kicked: ChatMemberUpdated(chat=Chat(id=-1001718926994, type='channel', title='nd', username=None, first_name=None, last_name=None, is_forum=None, is_direct_messages=None, accent_color_id=None, active_usernames=None, available_reactions=None, background_custom_emoji_id=None, bio=None, birthdate=None, business_intro=None, business_location=None, business_opening_hours=None, can_set_sticker_set=None, custom_emoji_sticker_set_name=None, description=None, emoji_status_custom_emoji_id=None, emoji_status_expiration_date=None, has_aggressive_anti_spam_enabled=None, has_hidden_members=None, has_private_forwards=None, has_protected_content=None, has_restricted_voice_and_video_messages=None, has_visible_history=None, invite_link=None, join_by_request=None, join_to_send_messages=None, linked_chat_id=None, location=None, message_auto_delete_time=None, permissions=None, personal_chat=None, photo=None, pinned_message=None, profile_accent_color_id=None, profile_background_custom_emoji_id=None, slow_mode_delay=None, sticker_set_name=None, unrestrict_boost_count=None), from_user=User(id=249560478, is_bot=False, first_name='arekusei', last_name=None, username='segmentation_fault', language_code='en', is_premium=True, added_to_attachment_menu=None, can_join_groups=None, can_read_all_group_messages=None, supports_inline_queries=None, can_connect_to_business=None, has_main_web_app=None), date=datetime.datetime(2025, 12, 9, 22, 37, 18, tzinfo=TzInfo(UTC)), old_chat_member=ChatMemberAdministrator(status='administrator', user=User(id=6834918039, is_bot=True, first_name='dev-test', last_name=None, username='devtest12345bot', language_code=None, is_premium=None, added_to_attachment_menu=None, can_join_groups=None, can_read_all_group_messages=None, supports_inline_queries=None, can_connect_to_business=None, has_main_web_app=None), can_be_edited=False, is_anonymous=False, can_manage_chat=True, can_delete_messages=True, can_manage_video_chats=True, can_restrict_members=True, can_promote_members=False, can_change_info=True, can_invite_users=True, can_post_stories=True, can_edit_stories=True, can_delete_stories=True, can_post_messages=True, can_edit_messages=True, can_pin_messages=None, can_manage_topics=None, can_manage_direct_messages=True, custom_title=None, can_manage_voice_chats=True), new_chat_member=ChatMemberBanned(status='kicked', user=User(id=6834918039, is_bot=True, first_name='dev-test', last_name=None, username='devtest12345bot', language_code=None, is_premium=None, added_to_attachment_menu=None, can_join_groups=None, can_read_all_group_messages=None, supports_inline_queries=None, can_connect_to_business=None, has_main_web_app=None), until_date=datetime.datetime(1970, 1, 1, 0, 0, tzinfo=TzInfo(UTC))), invite_link=None, via_join_request=None, via_chat_folder_invite_link=None)
     # This event is triggered when the bot is added to a chat as an administrator
     # We need to check if the bot has the permission to post messages
@@ -87,9 +93,15 @@ async def my_chat_member(
     added_channel = await repo_holder.channel_repo.create_channel(channel_model)
     logging.info(f"Channel {added_channel.id} added to the database")
 
-    await dialog_manager.start(
+    # Send success message to chat with user
+    # await bot.send_message(user.chat_id, "Channel added successfully")
+    bg = dialog_manager.bg(
+        user_id=user.telegram_id,
+        chat_id=user.chat_id,
+    )
+    await bg.start(
         ChannelsSettingsStates.CHANNELS_LIST,
-        show_mode=ShowMode.EDIT,
+        show_mode=ShowMode.SEND,
         data={"is_new_channel": True},
     )
 
